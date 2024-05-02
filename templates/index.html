@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Object Detection API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #image-container {
+            width: 50%;
+            margin: 20px auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+        #image-container img {
+            width: 100%;
+            height: 300px;
+            object-fit: contain;
+        }
+        #result-container {
+            width: 50%;
+            margin: 20px auto;
+            padding: 10px;
+        }
+        #result-container ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        #result-container li {
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+        #result-container li:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Object Detection API</h1>
+    <div id="image-container">
+        <img id="image" src="" alt="Uploaded Image">
+        <input type="file" id="file-input" accept="image/*">
+        <button id="detect-button">Detect Objects</button>
+    </div>
+    <div id="result-container">
+        <h2>Detection Results</h2>
+        <ul id="result-list"></ul>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('file-input');
+        const detectButton = document.getElementById('detect-button');
+        const imageContainer = document.getElementById('image-container');
+        const resultContainer = document.getElementById('result-container');
+        const resultList = document.getElementById('result-list');
+
+        fileInput.addEventListener('change', (e) => {
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            reader.onload = () => {
+                const imageData = reader.result;
+                const image = document.getElementById('image');
+                image.src = imageData;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        detectButton.addEventListener('click', () => {
+            const imageData = document.getElementById('image').src;
+            const base64Image = imageData.split(',')[1];
+            console.log('Sending request with image data:', base64Image);
+
+            fetch('http://127.0.0.1:5000/detect', {
+                method: 'POST',
+                // mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json', Accept : 'application/json'
+                },
+                body: JSON.stringify({ image: base64Image })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const results = data.prediction;
+                resultList.innerHTML = '';
+                results.forEach(result => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `Class: ${result.Class}, Box Coordinates: ${result['Box-Coordinates']}, Confidence: ${result.Confidence}`;
+                    resultList.appendChild(listItem);
+                });
+            })
+            .catch(error => console.error(error));
+        });
+    </script>
+</body>
+</html>
